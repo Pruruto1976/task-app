@@ -6,21 +6,7 @@
 <title>やること帳 ⭐</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg: #f5f3ff;
-  --primary: #7c5cfc;
-  --primary-light: #ede9ff;
-  --accent: #ff6b9d;
-  --gold: #ffc542;
-  --green: #06d6a0;
-  --red: #ff4d6d;
-  --mission: #ff8c00;
-  --mission-light: #fff3e0;
-  --text: #1e1b2e;
-  --muted: #9494b0;
-  --radius: 16px;
-  --tab-h: 64px;
-}
+:root{--bg:#f5f3ff;--primary:#7c5cfc;--primary-light:#ede9ff;--accent:#ff6b9d;--gold:#ffc542;--green:#06d6a0;--red:#ff4d6d;--mission:#ff8c00;--mission-light:#fff3e0;--text:#1e1b2e;--muted:#9494b0;--radius:16px;--tab-h:64px;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{height:100%;overflow:hidden;}
 body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
@@ -34,6 +20,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);disp
 .google-btn:active{transform:scale(.96);}
 .google-icon{width:24px;height:24px;}
 .login-err{color:#ffd166;font-size:13px;font-weight:700;margin-top:20px;text-align:center;min-height:20px;}
+.login-loading{color:rgba(255,255,255,.8);font-size:14px;font-weight:700;margin-top:20px;display:none;}
 
 .hdr{background:linear-gradient(135deg,#7c5cfc 0%,#b06bff 100%);padding:env(safe-area-inset-top,0) 16px 0;flex-shrink:0;position:relative;overflow:hidden;}
 .hdr::after{content:'';position:absolute;width:180px;height:180px;background:rgba(255,255,255,.07);border-radius:50%;top:-60px;right:-40px;pointer-events:none;}
@@ -49,8 +36,8 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);disp
 .prog-lbl{color:rgba(255,255,255,.85);font-size:12px;font-weight:700;padding-bottom:12px;}
 
 .tabs{display:flex;background:#fff;border-top:1px solid #ece9f5;flex-shrink:0;height:var(--tab-h);padding-bottom:env(safe-area-inset-bottom,0);}
-.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;gap:3px;transition:color .2s;}
-.tab .ti{font-size:22px;transition:transform .2s;}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;gap:3px;}
+.tab .ti{font-size:22px;}
 .tab.active{color:var(--primary);}
 .tab.active .ti{transform:translateY(-2px);}
 
@@ -106,7 +93,6 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);disp
 .cat-row::-webkit-scrollbar{display:none;}
 .cat-btn{border:none;border-radius:50px;padding:6px 13px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;background:#fff;color:var(--muted);box-shadow:0 2px 6px rgba(0,0,0,.06);}
 .cat-btn.on{color:#fff;}
-
 .empty{text-align:center;padding:36px 16px;color:var(--muted);}
 .empty-ic{font-size:44px;margin-bottom:8px;}
 .empty-tx{font-size:14px;font-weight:700;}
@@ -172,10 +158,11 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);disp
   <div class="login-logo">⭐</div>
   <div class="login-title">やること帳</div>
   <div class="login-sub">Googleアカウントでログインしてね</div>
-  <button class="google-btn" onclick="loginWithGoogle()">
+  <button class="google-btn" id="login-btn" onclick="loginWithGoogle()">
     <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
     Googleでログイン
   </button>
+  <div class="login-loading" id="login-loading">ログイン中...しばらくお待ちください</div>
   <div class="login-err" id="login-err"></div>
 </div>
 
@@ -268,7 +255,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);disp
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-import { getAuth, GoogleAuthProvider, signInWithRedirect, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDVynkWdyCllY5Ghqju0lR7bbvYq27HF5A",
@@ -279,7 +266,7 @@ const firebaseConfig = {
   appId: "1:441639308528:web:1b67742f2bb27d4b304635"
 };
 
-// ★ 許可するGmailアドレス（追加する場合はここに書き足すだけでOK）
+// ★ 許可するGmailアドレス（追加する場合はここに書き足すだけ）
 const ALLOWED_EMAILS = [
   "ruhitonium@gmail.com",
   "ricopin1013@gmail.com",
@@ -310,20 +297,46 @@ let selectedCat='study', isMission=false, filterCat='all';
 let penaltyQueue=[], currentUser=null;
 let unsubTasks=null, unsubPoints=null;
 
-function todayStr(){ const d=new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
+// タイムゾーン対応の今日の日付
+function todayStr(){
+  const d=new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function getCat(id){ return CATS.find(c=>c.id===id)||CATS[4]; }
 function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-window.loginWithGoogle = async function(){
-  document.getElementById('login-err').textContent='';
-  try {
-    const result = await signInWithRedirect(auth, new GoogleAuthProvider());
+// ───── AUTH ─────
+// リダイレクト結果を最初に処理
+document.getElementById('login-loading').style.display = 'block';
+document.getElementById('login-btn').style.display = 'none';
+
+getRedirectResult(auth).then(result => {
+  if(result){
     if(!ALLOWED_EMAILS.includes(result.user.email)){
-      await signOut(auth);
-      document.getElementById('login-err').textContent='このアカウントは許可されていません';
+      signOut(auth);
+      document.getElementById('login-err').textContent = 'このアカウントは許可されていません';
+      document.getElementById('login-loading').style.display = 'none';
+      document.getElementById('login-btn').style.display = 'flex';
     }
+  } else {
+    document.getElementById('login-loading').style.display = 'none';
+    document.getElementById('login-btn').style.display = 'flex';
+  }
+}).catch(() => {
+  document.getElementById('login-loading').style.display = 'none';
+  document.getElementById('login-btn').style.display = 'flex';
+});
+
+window.loginWithGoogle = async function(){
+  document.getElementById('login-err').textContent = '';
+  document.getElementById('login-btn').style.display = 'none';
+  document.getElementById('login-loading').style.display = 'block';
+  try {
+    await signInWithRedirect(auth, new GoogleAuthProvider());
   } catch(e){
-    document.getElementById('login-err').textContent='ログインに失敗しました。もう一度お試しください';
+    document.getElementById('login-err').textContent = 'ログインに失敗しました';
+    document.getElementById('login-loading').style.display = 'none';
+    document.getElementById('login-btn').style.display = 'flex';
   }
 };
 
@@ -336,40 +349,45 @@ window.doLogout = async function(){
 
 onAuthStateChanged(auth, user => {
   if(user && ALLOWED_EMAILS.includes(user.email)){
-    currentUser=user;
+    currentUser = user;
     document.getElementById('login-screen').classList.add('hide');
     const name = user.displayName?.split(' ')[0] || 'きみ';
     document.getElementById('hdr-name').textContent = name+'のやること帳';
-    const avatar=document.getElementById('hdr-avatar');
+    const avatar = document.getElementById('hdr-avatar');
     if(user.photoURL){ avatar.src=user.photoURL; avatar.style.display='block'; }
     startListeners(user.uid);
+    initCalendar();
   } else {
-    currentUser=null;
+    currentUser = null;
     document.getElementById('login-screen').classList.remove('hide');
+    document.getElementById('login-loading').style.display = 'none';
+    document.getElementById('login-btn').style.display = 'flex';
     tasks=[]; points=0;
     if(unsubTasks) unsubTasks();
     if(unsubPoints) unsubPoints();
   }
 });
 
-getRedirectResult(auth).then(result => {
-  if(result && !ALLOWED_EMAILS.includes(result.user.email)){
-    signOut(auth);
-    document.getElementById('login-err').textContent='このアカウントは許可されていません';
-  }
-});
+function initCalendar(){
+  const now = new Date();
+  calYear  = now.getFullYear();
+  calMonth = now.getMonth();
+  selDate  = todayStr();
+  renderAll();
+}
 
 function startListeners(uid){
-  unsubTasks=onSnapshot(collection(db,'users',uid,'tasks'), snap=>{
-    tasks=snap.docs.map(d=>({id:d.id,...d.data()}));
+  unsubTasks = onSnapshot(collection(db,'users',uid,'tasks'), snap=>{
+    tasks = snap.docs.map(d=>({id:d.id,...d.data()}));
     checkPenalties(); renderAll();
   });
-  unsubPoints=onSnapshot(doc(db,'users',uid,'meta','points'), snap=>{
-    points=snap.exists()?(snap.data().value||0):0;
+  unsubPoints = onSnapshot(doc(db,'users',uid,'meta','points'), snap=>{
+    points = snap.exists()?(snap.data().value||0):0;
     renderAll();
   });
 }
 
+// ───── PENALTY ─────
 function checkPenalties(){
   const now=new Date(), today=todayStr();
   tasks.forEach(t=>{
@@ -399,6 +417,7 @@ window.closePenalty=function(){
   if(penaltyQueue.length>0) setTimeout(showNextPenalty,400);
 };
 
+// ───── RENDER ─────
 function renderAll(){ renderHeader(); renderCalendar(); renderDayTasks(); renderTaskList(); renderPoints(); }
 
 function renderHeader(){
@@ -411,6 +430,7 @@ function renderHeader(){
 }
 
 function renderCalendar(){
+  if(!calYear) return;
   document.getElementById('cal-month-lbl').textContent=`${calYear}年 ${calMonth+1}月`;
   const grid=document.getElementById('cal-grid');
   const dows=['日','月','火','水','木','金','土'];
@@ -419,11 +439,15 @@ function renderCalendar(){
   const daysInMonth=new Date(calYear,calMonth+1,0).getDate();
   const prevDays=new Date(calYear,calMonth,0).getDate();
   const today=todayStr();
-  for(let i=firstDow-1;i>=0;i--){const day=prevDays-i;html+=`<button class="cal-day other-month" onclick="selectDay(${calYear},${calMonth-1},${day})">${day}<span class="dot"></span></button>`;}
+  for(let i=firstDow-1;i>=0;i--){
+    const day=prevDays-i;
+    html+=`<button class="cal-day other-month" onclick="selectDay(${calYear},${calMonth-1},${day})">${day}<span class="dot"></span></button>`;
+  }
   for(let day=1;day<=daysInMonth;day++){
     const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
-    const isToday=ds===today,isSel=ds===selDate;
-    const hasMiss=tasks.some(t=>t.date===ds&&t.mission),hasTask=tasks.some(t=>t.date===ds);
+    const isToday=ds===today, isSel=ds===selDate;
+    const hasMiss=tasks.some(t=>t.date===ds&&t.mission);
+    const hasTask=tasks.some(t=>t.date===ds);
     let cls='cal-day';
     if(isToday) cls+=' today'; else if(isSel) cls+=' selected';
     if(hasMiss) cls+=' has-mission';
@@ -435,11 +459,23 @@ function renderCalendar(){
   grid.innerHTML=html;
 }
 
-window.changeMonth=function(dir){ calMonth+=dir; if(calMonth>11){calMonth=0;calYear++;} if(calMonth<0){calMonth=11;calYear--;} renderCalendar(); };
-window.selectDay=function(y,m,d){ const dt=new Date(y,m,d); calYear=dt.getFullYear(); calMonth=dt.getMonth(); selDate=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`; renderCalendar(); renderDayTasks(); };
+window.changeMonth=function(dir){
+  calMonth+=dir;
+  if(calMonth>11){calMonth=0;calYear++;}
+  if(calMonth<0){calMonth=11;calYear--;}
+  renderCalendar();
+};
+
+window.selectDay=function(y,m,d){
+  const dt=new Date(y,m,d);
+  calYear=dt.getFullYear();
+  calMonth=dt.getMonth();
+  selDate=`${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
+  renderCalendar(); renderDayTasks();
+};
 
 function renderDayTasks(){
-  const hdr=document.getElementById('day-header'),list=document.getElementById('day-task-list');
+  const hdr=document.getElementById('day-header'), list=document.getElementById('day-task-list');
   if(!selDate){hdr.innerHTML='';list.innerHTML='';return;}
   const [,m,d]=selDate.split('-');
   hdr.innerHTML=`<span>${selDate===todayStr()?'今日':`${parseInt(m)}月${parseInt(d)}日`}</span>のタスク`;
@@ -463,7 +499,7 @@ function renderTaskList(){
 }
 
 function taskCardHTML(t){
-  const cat=getCat(t.cat),today=todayStr(),overdue=t.date&&t.date<today&&!t.done;
+  const cat=getCat(t.cat), today=todayStr(), overdue=t.date&&t.date<today&&!t.done;
   let dateLbl=t.date?(overdue?`<span class="badge-date od">⚠️ ${t.date}</span>`:t.date===today?`<span class="badge-date">📅 今日</span>`:`<span class="badge-date">📅 ${t.date}</span>`):'';
   const timeLbl=(t.mission&&t.time)?`<span class="miss-time">⏰ ${t.time}まで</span>`:'';
   const missBadge=t.mission?`<span class="badge badge-miss">🔥ミッション</span>`:'';
@@ -478,6 +514,7 @@ function renderPoints(){
   document.getElementById('reward-list').innerHTML=REWARDS.map(r=>`<div class="rwd-card"><div class="rwd-ic">${r.icon}</div><div class="rwd-info"><div class="rwd-name">${r.name}</div><div class="rwd-cost">🪙 ${r.cost}pt</div></div><button class="rwd-btn" onclick="claim('${r.id}',${r.cost},'${r.name}')" ${points<r.cost?'disabled':''}>こうかん</button></div>`).join('');
 }
 
+// ───── ACTIONS ─────
 window.toggleTask=async function(id){
   if(!currentUser) return;
   const t=tasks.find(t=>t.id===id); if(!t) return;
@@ -499,6 +536,7 @@ window.claim=async function(id,cost,name){
 };
 window.setFilter=function(cat){ filterCat=cat; renderTaskList(); };
 
+// ───── MODAL ─────
 window.openModal=function(){
   document.getElementById('inp-name').value='';
   document.getElementById('inp-date').value=selDate||todayStr();
@@ -543,8 +581,6 @@ function toast(msg,type=''){
   clearTimeout(el._t); el._t=setTimeout(()=>el.classList.remove('show'),2400);
 }
 
-const now=new Date();
-calYear=now.getFullYear(); calMonth=now.getMonth(); selDate=todayStr(); renderCalendar();
 setInterval(()=>{ if(currentUser){ checkPenalties(); renderAll(); } },60000);
 </script>
 </body>
