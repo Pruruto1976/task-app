@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>やること帳 ⭐</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f5f3ff;
+  --card: #ffffff;
+  --primary: #7c5cfc;
+  --primary-light: #ede9ff;
+  --accent: #ff6b9d;
+  --gold: #ffc542;
+  --green: #06d6a0;
+  --red: #ff4d6d;
+  --mission: #ff8c00;
+  --mission-light: #fff3e0;
+  --text: #1e1b2e;
+  --muted: #9494b0;
+  --radius: 16px;
+  --tab-h: 64px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
+
+/* ── HEADER ── */
+.hdr{
+  background:linear-gradient(135deg,#7c5cfc 0%,#b06bff 100%);
+  padding:env(safe-area-inset-top,0) 16px 0;
+  flex-shrink:0;
+  position:relative;overflow:hidden;
+}
+.hdr::after{content:'';position:absolute;width:180px;height:180px;background:rgba(255,255,255,.07);border-radius:50%;top:-60px;right:-40px;pointer-events:none;}
+.hdr-inner{padding:14px 0 0;}
+.hdr-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.hdr-title{color:#fff;font-size:20px;font-weight:900;letter-spacing:-.5px;}
+.pt-chip{background:rgba(255,255,255,.2);border:1.5px solid rgba(255,255,255,.45);border-radius:50px;padding:6px 14px;color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;gap:5px;cursor:pointer;}
+.prog-wrap{background:rgba(255,255,255,.18);border-radius:100px;height:8px;overflow:hidden;margin-bottom:6px;}
+.prog-bar{height:100%;background:linear-gradient(90deg,#ffd166,#ff6b9d);border-radius:100px;transition:width .6s cubic-bezier(.34,1.56,.64,1);}
+.prog-lbl{color:rgba(255,255,255,.85);font-size:12px;font-weight:700;padding-bottom:12px;}
+
+/* ── TABS ── */
+.tabs{display:flex;background:#fff;border-top:1px solid #ece9f5;flex-shrink:0;height:var(--tab-h);padding-bottom:env(safe-area-inset-bottom,0);}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border:none;background:transparent;font-family:'Nunito',sans-serif;font-size:10px;font-weight:700;color:var(--muted);cursor:pointer;gap:3px;transition:color .2s;}
+.tab .ti{font-size:22px;transition:transform .2s;}
+.tab.active{color:var(--primary);}
+.tab.active .ti{transform:translateY(-2px);}
+
+/* ── SCROLL AREA ── */
+.pages{flex:1;overflow:hidden;position:relative;}
+.page{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 14px calc(14px);display:none;}
+.page.active{display:block;}
+
+/* ── CALENDAR ── */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.cal-nav-btn{background:none;border:none;font-size:22px;cursor:pointer;padding:4px 10px;border-radius:10px;color:var(--primary);transition:background .15s;}
+.cal-nav-btn:active{background:var(--primary-light);}
+.cal-month{font-size:17px;font-weight:900;}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;margin-bottom:16px;}
+.cal-dow{text-align:center;font-size:11px;font-weight:700;color:var(--muted);padding-bottom:4px;}
+.cal-day{
+  aspect-ratio:1;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s;font-size:13px;font-weight:700;position:relative;background:transparent;border:none;font-family:'Nunito',sans-serif;color:var(--text);
+}
+.cal-day.other-month{color:#ccc;}
+.cal-day.today{background:var(--primary);color:#fff !important;box-shadow:0 3px 10px rgba(124,92,252,.4);}
+.cal-day.selected:not(.today){background:var(--primary-light);color:var(--primary);}
+.cal-day.has-mission::after{content:'🔥';position:absolute;top:-2px;right:-2px;font-size:9px;}
+.cal-day.has-task .dot{width:5px;height:5px;border-radius:50%;background:var(--muted);margin-top:2px;}
+.cal-day.today .dot{background:rgba(255,255,255,.7);}
+.dot{width:5px;height:5px;border-radius:50%;background:transparent;}
+
+/* ── SELECTED DAY TASKS ── */
+.day-header{font-size:15px;font-weight:900;margin-bottom:10px;}
+.day-header span{color:var(--primary);}
+
+/* ── TASK CARD ── */
+.tc{
+  background:#fff;border-radius:var(--radius);padding:14px;margin-bottom:9px;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:0 2px 10px rgba(0,0,0,.05);
+  animation:si .25s ease;transition:opacity .3s;
+}
+@keyframes si{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.tc.done{opacity:.5;}
+.tc.done .tc-name{text-decoration:line-through;color:var(--muted);}
+.tc.mission-card{border-left:4px solid var(--mission);}
+.tc.mission-card.done{border-color:#ccc;}
+.tc.overdue-card{border-left:4px solid var(--red);}
+
+.chk{width:34px;height:34px;border-radius:50%;border:2.5px solid #ddd;background:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:17px;transition:all .2s;flex-shrink:0;}
+.chk.on{background:var(--green);border-color:var(--green);color:#fff;}
+
+.tc-body{flex:1;min-width:0;}
+.tc-name{font-size:14px;font-weight:700;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tc-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
+.badge{font-size:10px;font-weight:700;border-radius:50px;padding:2px 8px;color:#fff;}
+.badge-miss{background:var(--mission);}
+.badge-pt{background:transparent;color:var(--gold);font-size:11px;font-weight:800;}
+.badge-date{font-size:10px;color:var(--muted);font-weight:600;}
+.badge-date.od{color:var(--red);font-weight:800;}
+.miss-time{font-size:10px;color:var(--mission);font-weight:700;}
+
+.del-btn{background:none;border:none;font-size:17px;cursor:pointer;color:#ccc;padding:4px;border-radius:8px;}
+.del-btn:active{color:var(--red);}
+
+/* ── MISSION STRIP ── */
+.miss-strip{
+  background:linear-gradient(135deg,#ff8c00,#ffc542);
+  border-radius:var(--radius);padding:14px 16px;margin-bottom:14px;
+  display:flex;align-items:center;gap:12px;color:#fff;
+}
+.miss-strip-icon{font-size:28px;}
+.miss-strip-body{flex:1;}
+.miss-strip-title{font-weight:900;font-size:14px;}
+.miss-strip-sub{font-size:12px;opacity:.9;margin-top:2px;}
+.miss-penalty{background:rgba(255,255,255,.2);border-radius:8px;padding:4px 10px;font-size:12px;font-weight:700;}
+
+/* ── SECTION TITLE ── */
+.sec-ttl{font-size:12px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:12px 0 8px;}
+
+/* ── CAT FILTER ── */
+.cat-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;scrollbar-width:none;}
+.cat-row::-webkit-scrollbar{display:none;}
+.cat-btn{border:none;border-radius:50px;padding:6px 13px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;background:#fff;color:var(--muted);box-shadow:0 2px 6px rgba(0,0,0,.06);transition:all .15s;}
+.cat-btn.on{color:#fff;box-shadow:0 3px 10px rgba(0,0,0,.18);}
+
+/* ── EMPTY ── */
+.empty{text-align:center;padding:36px 16px;color:var(--muted);}
+.empty-ic{font-size:44px;margin-bottom:8px;}
+.empty-tx{font-size:14px;font-weight:700;}
+
+/* ── POINTS PAGE ── */
+.pts-hero{background:linear-gradient(135deg,#ffc542,#ff6b9d);border-radius:var(--radius);padding:22px;text-align:center;margin-bottom:14px;color:#fff;}
+.pts-big{font-size:52px;font-weight:900;line-height:1;}
+.pts-lbl{font-size:14px;font-weight:700;opacity:.9;margin-top:4px;}
+.rwd-card{background:#fff;border-radius:var(--radius);padding:14px;margin-bottom:9px;box-shadow:0 2px 10px rgba(0,0,0,.05);display:flex;align-items:center;gap:12px;}
+.rwd-ic{font-size:30px;}
+.rwd-info{flex:1;}
+.rwd-name{font-weight:800;font-size:14px;}
+.rwd-cost{font-size:12px;color:var(--accent);font-weight:700;margin-top:2px;}
+.rwd-btn{border:none;border-radius:10px;padding:8px 13px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;background:var(--primary-light);color:var(--primary);transition:all .2s;}
+.rwd-btn:disabled{opacity:.35;cursor:not-allowed;}
+.rwd-btn:not(:disabled):active{background:var(--primary);color:#fff;}
+
+/* ── FAB ── */
+.fab{
+  position:fixed;bottom:calc(var(--tab-h) + 16px);right:16px;
+  width:56px;height:56px;border-radius:50%;
+  background:linear-gradient(135deg,#7c5cfc,#b06bff);
+  border:none;color:#fff;font-size:26px;
+  box-shadow:0 5px 20px rgba(124,92,252,.45);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:transform .15s;z-index:50;
+}
+.fab:active{transform:scale(.93);}
+
+/* ── MODAL ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(20,15,40,.5);z-index:100;align-items:flex-end;justify-content:center;}
+.overlay.open{display:flex;}
+.modal{background:#fff;border-radius:24px 24px 0 0;padding:24px 18px calc(24px + env(safe-area-inset-bottom,0));width:100%;max-width:480px;animation:su .3s cubic-bezier(.34,1.56,.64,1);max-height:90vh;overflow-y:auto;}
+@keyframes su{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-handle{width:36px;height:4px;background:#e0e0ee;border-radius:100px;margin:0 auto 18px;}
+.modal-ttl{font-size:18px;font-weight:900;text-align:center;margin-bottom:18px;}
+.fg{margin-bottom:13px;}
+.fl{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px;display:block;}
+.fi{width:100%;padding:11px 13px;border:2px solid #eee;border-radius:11px;font-family:'Nunito',sans-serif;font-size:14px;font-weight:600;outline:none;transition:border-color .2s;}
+.fi:focus{border-color:var(--primary);}
+.cat-sel-row{display:flex;gap:7px;flex-wrap:wrap;}
+.cs-btn{border:2px solid #eee;border-radius:10px;padding:7px 12px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:var(--text);transition:all .15s;}
+.cs-btn.on{color:#fff;border-color:transparent;}
+.toggle-row{display:flex;align-items:center;justify-content:space-between;background:#f8f6ff;border-radius:12px;padding:12px 14px;}
+.toggle-label{font-size:14px;font-weight:700;}
+.toggle-sub{font-size:11px;color:var(--muted);margin-top:2px;}
+.toggle{width:46px;height:26px;background:#ddd;border-radius:100px;position:relative;cursor:pointer;transition:background .2s;border:none;flex-shrink:0;}
+.toggle::after{content:'';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform .2s;box-shadow:0 1px 4px rgba(0,0,0,.2);}
+.toggle.on{background:var(--mission);}
+.toggle.on::after{transform:translateX(20px);}
+.mission-fields{background:var(--mission-light);border-radius:12px;padding:12px;margin-top:8px;border:1.5px solid #ffd4a0;}
+.mission-fields .fl{color:var(--mission);}
+.sub-btn{width:100%;padding:15px;border-radius:13px;border:none;background:linear-gradient(135deg,#7c5cfc,#b06bff);color:#fff;font-family:'Nunito',sans-serif;font-size:16px;font-weight:800;cursor:pointer;margin-top:6px;box-shadow:0 4px 16px rgba(124,92,252,.4);transition:transform .15s;}
+.sub-btn:active{transform:scale(.97);}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:calc(var(--tab-h) + 14px);left:50%;transform:translateX(-50%) translateY(10px);background:#1e1b2e;color:#fff;padding:10px 22px;border-radius:50px;font-weight:700;font-size:13px;opacity:0;transition:all .3s;pointer-events:none;z-index:300;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast.bad{background:var(--red);}
+
+/* ── PENALTY MODAL ── */
+.pen-modal{background:#fff;border-radius:24px;padding:28px 22px;width:calc(100% - 40px);max-width:340px;text-align:center;animation:pop .35s cubic-bezier(.34,1.56,.64,1);}
+@keyframes pop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.pen-ic{font-size:56px;margin-bottom:10px;}
+.pen-ttl{font-size:20px;font-weight:900;margin-bottom:6px;}
+.pen-sub{font-size:14px;color:var(--muted);margin-bottom:20px;}
+.pen-num{font-size:36px;font-weight:900;color:var(--red);margin-bottom:20px;}
+.pen-ok{width:100%;padding:14px;border-radius:13px;border:none;background:var(--primary);color:#fff;font-family:'Nunito',sans-serif;font-size:15px;font-weight:800;cursor:pointer;}
+
+.pen-overlay{display:none;position:fixed;inset:0;background:rgba(20,15,40,.5);z-index:200;align-items:center;justify-content:center;}
+.pen-overlay.open{display:flex;}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="hdr">
+  <div class="hdr-inner">
+    <div class="hdr-row">
+      <div class="hdr-title">⭐ やること帳</div>
+      <div class="pt-chip" onclick="showTab('points')">🪙 <span id="hpt">0</span>pt</div>
+    </div>
+    <div class="prog-wrap"><div class="prog-bar" id="pbar" style="width:0%"></div></div>
+    <div class="prog-lbl" id="plbl">今日: 0/0 完了</div>
+  </div>
+</div>
+
+<!-- Pages -->
+<div class="pages">
+
+  <!-- Calendar -->
+  <div class="page active" id="page-cal">
+    <div class="cal-nav">
+      <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
+      <div class="cal-month" id="cal-month-lbl"></div>
+      <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div class="day-header" id="day-header"></div>
+    <div id="day-task-list"></div>
+  </div>
+
+  <!-- Tasks -->
+  <div class="page" id="page-tasks">
+    <div id="mission-banner"></div>
+    <div class="cat-row" id="cat-filter"></div>
+    <div class="sec-ttl">タスク一覧</div>
+    <div id="task-list"></div>
+  </div>
+
+  <!-- Points -->
+  <div class="page" id="page-points">
+    <div class="pts-hero">
+      <div class="pts-big">🪙<span id="pts-big-num">0</span></div>
+      <div class="pts-lbl">つかえるポイント</div>
+    </div>
+    <div class="sec-ttl">ほうびリスト</div>
+    <div id="reward-list"></div>
+  </div>
+
+</div>
+
+<!-- Bottom Tabs -->
+<div class="tabs">
+  <button class="tab active" onclick="showTab('cal')"><span class="ti">📅</span>カレンダー</button>
+  <button class="tab" onclick="showTab('tasks')"><span class="ti">📋</span>タスク</button>
+  <button class="tab" onclick="showTab('points')"><span class="ti">🏆</span>ほうび</button>
+</div>
+
+<!-- FAB -->
+<button class="fab" onclick="openModal()">＋</button>
+
+<!-- Add Task Modal -->
+<div class="overlay" id="add-overlay" onclick="closeOverlayOut(event,'add-overlay')">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-ttl" id="modal-ttl">タスクを追加 ✏️</div>
+
+    <div class="fg">
+      <label class="fl">タスク名</label>
+      <input class="fi" id="inp-name" type="text" placeholder="例: 漢字ドリル10ページ" maxlength="40">
+    </div>
+
+    <div class="fg">
+      <label class="fl">カテゴリ</label>
+      <div class="cat-sel-row" id="cat-sel"></div>
+    </div>
+
+    <div class="fg">
+      <label class="fl">日付</label>
+      <input class="fi" id="inp-date" type="date">
+    </div>
+
+    <div class="fg">
+      <label class="fl">ポイント（完了時にゲット）</label>
+      <input class="fi" id="inp-pts" type="number" value="10" min="1" max="200">
+    </div>
+
+    <div class="fg">
+      <div class="toggle-row">
+        <div>
+          <div class="toggle-label">🔥 ミッションにする</div>
+          <div class="toggle-sub">必ずやること・未完了でポイント減</div>
+        </div>
+        <button class="toggle" id="miss-toggle" onclick="toggleMission()"></button>
+      </div>
+      <div class="mission-fields" id="miss-fields" style="display:none;">
+        <div class="fg">
+          <label class="fl">⏰ 時間指定（任意）</label>
+          <input class="fi" id="inp-time" type="time">
+        </div>
+        <div class="fg" style="margin-bottom:0">
+          <label class="fl">💸 未完了ペナルティ（pt）</label>
+          <input class="fi" id="inp-pen" type="number" value="20" min="1" max="500">
+        </div>
+      </div>
+    </div>
+
+    <button class="sub-btn" onclick="addTask()">追加する！</button>
+  </div>
+</div>
+
+<!-- Penalty Modal -->
+<div class="pen-overlay" id="pen-overlay">
+  <div class="pen-modal">
+    <div class="pen-ic">😱</div>
+    <div class="pen-ttl">ミッション失敗！</div>
+    <div class="pen-sub" id="pen-task-name">宿題をやる</div>
+    <div class="pen-num" id="pen-amount">-20pt</div>
+    <button class="pen-ok" onclick="closePenalty()">わかった…</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ───── CONSTANTS ─────
+const CATS = [
+  {id:'study', label:'勉強',   emoji:'📚', color:'#7c5cfc'},
+  {id:'sport', label:'運動',   emoji:'⚽', color:'#06d6a0'},
+  {id:'home',  label:'おてつだい', emoji:'🏠', color:'#ffc542'},
+  {id:'life',  label:'生活',   emoji:'🌟', color:'#ff6b9d'},
+  {id:'other', label:'その他', emoji:'💫', color:'#a78bfa'},
+];
+const REWARDS = [
+  {id:1, name:'ゲーム30分', icon:'🎮', cost:50},
+  {id:2, name:'おやつ1個', icon:'🍪', cost:30},
+  {id:3, name:'好きな夕ごはん', icon:'🍕', cost:100},
+  {id:4, name:'映画をみる', icon:'🎬', cost:80},
+  {id:5, name:'文房具を買ってもらう', icon:'✏️', cost:150},
+];
+
+// ───── STATE ─────
+let tasks   = JSON.parse(localStorage.getItem('tasks2') || 'null');
+let points  = parseInt(localStorage.getItem('points2') || '0');
+let calYear, calMonth, selDate;
+let selectedCat = 'study';
+let isMission = false;
+let filterCat = 'all';
+let currentTab = 'cal';
+let penaltyQueue = [];
+
+if (!tasks) {
+  const today = todayStr();
+  const tom = offsetDay(today, 1);
+  const d2  = offsetDay(today, 2);
+  tasks = [
+    {id:'s1', name:'漢字ドリル 10ページ', cat:'study', date:today, pts:20, mission:false, done:false},
+    {id:'s2', name:'算数プリント',         cat:'study', date:today, pts:15, mission:false, done:true},
+    {id:'s3', name:'部屋のそうじ',         cat:'home',  date:today, pts:10, mission:false, done:false},
+    {id:'s4', name:'縄跳び100回',          cat:'sport', date:today, pts:25, mission:false, done:false},
+    {id:'s5', name:'歯みがき（夜）',       cat:'life',  date:today, pts:5,  mission:true,  time:'21:00', penalty:15, done:true},
+    {id:'s6', name:'英語音読 5分',         cat:'study', date:tom,   pts:20, mission:true,  time:'18:00', penalty:20, done:false},
+    {id:'s7', name:'図書館の本を返す',     cat:'other', date:d2,    pts:10, mission:true,  penalty:30, done:false},
+  ];
+  points = 20;
+  save();
+}
+
+// ───── HELPERS ─────
+function todayStr(){ return new Date().toISOString().split('T')[0]; }
+function offsetDay(d,n){ const dt=new Date(d); dt.setDate(dt.getDate()+n); return dt.toISOString().split('T')[0]; }
+function getCat(id){ return CATS.find(c=>c.id===id)||CATS[4]; }
+function save(){ localStorage.setItem('tasks2',JSON.stringify(tasks)); localStorage.setItem('points2',points.toString()); }
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ───── PENALTY CHECK ─────
+function checkPenalties(){
+  const now = new Date();
+  const today = todayStr();
+  tasks.forEach(t => {
+    if(!t.mission || t.done || t.penalized) return;
+    if(t.date && t.date < today){
+      // past day mission not done
+      applyPenalty(t);
+    } else if(t.date === today && t.time){
+      // today's mission past time
+      const [hh,mm] = t.time.split(':').map(Number);
+      const deadline = new Date(); deadline.setHours(hh,mm,0,0);
+      if(now > deadline) applyPenalty(t);
+    }
+  });
+  if(penaltyQueue.length > 0) showNextPenalty();
+}
+function applyPenalty(t){
+  t.penalized = true;
+  const pen = t.penalty || 20;
+  points = Math.max(0, points - pen);
+  penaltyQueue.push({name: t.name, pen});
+  save();
+}
+function showNextPenalty(){
+  if(penaltyQueue.length === 0) return;
+  const {name, pen} = penaltyQueue.shift();
+  document.getElementById('pen-task-name').textContent = name;
+  document.getElementById('pen-amount').textContent = `-${pen}pt`;
+  document.getElementById('pen-overlay').classList.add('open');
+}
+function closePenalty(){
+  document.getElementById('pen-overlay').classList.remove('open');
+  renderAll();
+  if(penaltyQueue.length > 0) setTimeout(showNextPenalty, 400);
+}
+
+// ───── RENDER ALL ─────
+function renderAll(){
+  renderHeader();
+  renderCalendar();
+  renderDayTasks();
+  renderTaskList();
+  renderPoints();
+}
+
+// ───── HEADER ─────
+function renderHeader(){
+  document.getElementById('hpt').textContent = points;
+  const today = todayStr();
+  const todayT = tasks.filter(t => t.date === today);
+  const done = todayT.filter(t=>t.done).length;
+  const total = todayT.length;
+  const pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('pbar').style.width = pct+'%';
+  document.getElementById('plbl').textContent = `今日: ${done}/${total} 完了 (${pct}%)`;
+}
+
+// ───── CALENDAR ─────
+function renderCalendar(){
+  const d = new Date(calYear, calMonth, 1);
+  document.getElementById('cal-month-lbl').textContent =
+    `${calYear}年 ${calMonth+1}月`;
+
+  const grid = document.getElementById('cal-grid');
+  const dows = ['日','月','火','水','木','金','土'];
+  let html = dows.map(d=>`<div class="cal-dow">${d}</div>`).join('');
+
+  const firstDow = d.getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const today = todayStr();
+
+  // prev month filler
+  const prevDays = new Date(calYear, calMonth, 0).getDate();
+  for(let i=firstDow-1;i>=0;i--){
+    const day = prevDays - i;
+    html += `<button class="cal-day other-month" onclick="selectDay(${calYear},${calMonth-1},${day})">${day}</button>`;
+  }
+
+  for(let day=1; day<=daysInMonth; day++){
+    const dateStr = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isToday = dateStr === today;
+    const isSel   = dateStr === selDate;
+    const hasMiss = tasks.some(t=>t.date===dateStr && t.mission);
+    const hasTask = tasks.some(t=>t.date===dateStr);
+    let cls = 'cal-day';
+    if(isToday) cls+=' today';
+    else if(isSel) cls+=' selected';
+    if(hasMiss) cls+=' has-mission';
+    if(hasTask) cls+=' has-task';
+    html += `<button class="${cls}" onclick="selectDay(${calYear},${calMonth},${day})">
+      ${day}<span class="dot"></span>
+    </button>`;
+  }
+
+  // next month filler
+  const totalCells = firstDow + daysInMonth;
+  const rem = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for(let i=1;i<=rem;i++){
+    html += `<button class="cal-day other-month" onclick="selectDay(${calYear},${calMonth+1},${i})">${i}</button>`;
+  }
+
+  grid.innerHTML = html;
+}
+
+function changeMonth(dir){
+  calMonth += dir;
+  if(calMonth > 11){calMonth=0; calYear++;}
+  if(calMonth < 0){calMonth=11; calYear--;}
+  renderCalendar();
+}
+
+function selectDay(y, m, d){
+  // normalize month
+  const dt = new Date(y, m, d);
+  calYear  = dt.getFullYear();
+  calMonth = dt.getMonth();
+  selDate  = dt.toISOString().split('T')[0];
+  renderCalendar();
+  renderDayTasks();
+}
+
+function renderDayTasks(){
+  const hdr = document.getElementById('day-header');
+  const list = document.getElementById('day-task-list');
+  if(!selDate){ hdr.innerHTML=''; list.innerHTML=''; return; }
+
+  const [y,m,d] = selDate.split('-');
+  const today = todayStr();
+  const label = selDate === today ? '今日' : `${parseInt(m)}月${parseInt(d)}日`;
+  hdr.innerHTML = `<span>${label}</span>のタスク`;
+
+  const dayTasks = tasks.filter(t=>t.date===selDate);
+  if(dayTasks.length===0){
+    list.innerHTML=`<div class="empty"><div class="empty-ic">📭</div><div class="empty-tx">この日のタスクなし</div></div>`;
+    return;
+  }
+  // missions first
+  const sorted = [...dayTasks].sort((a,b)=>(b.mission?1:0)-(a.mission?1:0));
+  list.innerHTML = sorted.map(t=>taskCardHTML(t)).join('');
+}
+
+// ───── TASK LIST PAGE ─────
+function renderTaskList(){
+  // Mission banner
+  const today = todayStr();
+  const todayMissions = tasks.filter(t=>t.mission && t.date===today && !t.done && !t.penalized);
+  const banner = document.getElementById('mission-banner');
+  if(todayMissions.length>0){
+    const m = todayMissions[0];
+    const timeStr = m.time ? ` ⏰ ${m.time}まで` : ' 今日中に！';
+    banner.innerHTML=`
+      <div class="miss-strip">
+        <div class="miss-strip-icon">🔥</div>
+        <div class="miss-strip-body">
+          <div class="miss-strip-title">${esc(m.name)}</div>
+          <div class="miss-strip-sub">${timeStr} 未完了で -${m.penalty||20}pt</div>
+        </div>
+        <div class="miss-penalty">${todayMissions.length}件</div>
+      </div>`;
+  } else { banner.innerHTML=''; }
+
+  // Cat filter
+  const cfRow = document.getElementById('cat-filter');
+  const allOn = filterCat==='all';
+  cfRow.innerHTML = `<button class="cat-btn ${allOn?'on':''}" style="${allOn?'background:#7c5cfc;color:#fff;':''}" onclick="setFilter('all',this)">すべて</button>`
+    + CATS.map(c=>{const on=filterCat===c.id;return`<button class="cat-btn ${on?'on':''}" style="${on?`background:${c.color};color:#fff;`:''}" onclick="setFilter('${c.id}',this)">${c.emoji} ${c.label}</button>`;}).join('');
+
+  // Tasks
+  const list = document.getElementById('task-list');
+  const pending = tasks.filter(t=>!t.done && (filterCat==='all'||t.cat===filterCat));
+  if(pending.length===0){
+    list.innerHTML=`<div class="empty"><div class="empty-ic">🎉</div><div class="empty-tx">全部できた！すごい！</div></div>`;
+    return;
+  }
+  const sorted = [...pending].sort((a,b)=>(b.mission?1:0)-(a.mission?1:0));
+  list.innerHTML = sorted.map(t=>taskCardHTML(t)).join('');
+}
+
+function setFilter(cat){
+  filterCat = cat;
+  renderTaskList();
+}
+
+function taskCardHTML(t){
+  const cat = getCat(t.cat);
+  const today = todayStr();
+  const overdue = t.date && t.date < today && !t.done;
+  let dateLbl = '';
+  if(t.date){
+    if(overdue) dateLbl=`<span class="badge-date od">⚠️ ${t.date}</span>`;
+    else if(t.date===today) dateLbl=`<span class="badge-date">📅 今日</span>`;
+    else dateLbl=`<span class="badge-date">📅 ${t.date}</span>`;
+  }
+  const timeLbl = (t.mission && t.time) ? `<span class="miss-time">⏰ ${t.time}まで</span>` : '';
+  const missBadge = t.mission ? `<span class="badge badge-miss">🔥ミッション</span>` : '';
+  const penBadge = t.penalized ? `<span class="badge" style="background:#ccc">ペナルティ済</span>` : '';
+
+  let cls = 'tc';
+  if(t.done) cls+=' done';
+  if(t.mission && !t.done) cls+=' mission-card';
+  if(overdue && !t.done) cls+=' overdue-card';
+
+  return `<div class="${cls}" id="tc-${t.id}">
+    <button class="chk ${t.done?'on':''}" onclick="toggle('${t.id}')">${t.done?'✓':''}</button>
+    <div class="tc-body">
+      <div class="tc-name">${esc(t.name)}</div>
+      <div class="tc-meta">
+        <span class="badge" style="background:${cat.color}">${cat.emoji} ${cat.label}</span>
+        ${missBadge}${penBadge}${dateLbl}${timeLbl}
+        <span class="badge-pt">+${t.pts}pt</span>
+      </div>
+    </div>
+    <button class="del-btn" onclick="del('${t.id}')">🗑</button>
+  </div>`;
+}
+
+// ───── POINTS PAGE ─────
+function renderPoints(){
+  document.getElementById('hpt').textContent = points;
+  document.getElementById('pts-big-num').textContent = points;
+  document.getElementById('reward-list').innerHTML = REWARDS.map(r=>`
+    <div class="rwd-card">
+      <div class="rwd-ic">${r.icon}</div>
+      <div class="rwd-info">
+        <div class="rwd-name">${r.name}</div>
+        <div class="rwd-cost">🪙 ${r.cost}pt</div>
+      </div>
+      <button class="rwd-btn" onclick="claim(${r.id},${r.cost},'${r.name}')" ${points<r.cost?'disabled':''}>こうかん</button>
+    </div>`).join('');
+}
+
+// ───── ACTIONS ─────
+function toggle(id){
+  const t = tasks.find(t=>t.id===id);
+  if(!t) return;
+  t.done = !t.done;
+  if(t.done){ points += t.pts; toast(`+${t.pts}pt ゲット！🎉`); }
+  else { points = Math.max(0, points - t.pts); toast('未完了に戻したよ'); }
+  save(); renderAll();
+}
+
+function del(id){
+  if(!confirm('このタスクを削除する？')) return;
+  tasks = tasks.filter(t=>t.id!==id);
+  save(); renderAll(); toast('削除したよ🗑');
+}
+
+function claim(id, cost, name){
+  if(points < cost) return;
+  points -= cost; save(); renderPoints();
+  toast(`「${name}」とこうかんしたよ🎊`);
+}
+
+// ───── ADD TASK MODAL ─────
+function openModal(){
+  document.getElementById('inp-name').value='';
+  document.getElementById('inp-date').value = selDate || todayStr();
+  document.getElementById('inp-pts').value = 10;
+  document.getElementById('inp-time').value = '';
+  document.getElementById('inp-pen').value = 20;
+  isMission = false;
+  updateMissionToggle();
+  renderCatSel();
+  document.getElementById('add-overlay').classList.add('open');
+  setTimeout(()=>document.getElementById('inp-name').focus(), 300);
+}
+
+function closeOverlayOut(e, id){
+  if(e.target.id===id) document.getElementById(id).classList.remove('open');
+}
+
+function toggleMission(){
+  isMission = !isMission;
+  updateMissionToggle();
+}
+function updateMissionToggle(){
+  const btn = document.getElementById('miss-toggle');
+  const fields = document.getElementById('miss-fields');
+  btn.classList.toggle('on', isMission);
+  fields.style.display = isMission ? 'block' : 'none';
+}
+
+function renderCatSel(){
+  document.getElementById('cat-sel').innerHTML = CATS.map(c=>{
+    const on = selectedCat===c.id;
+    return `<button class="cs-btn ${on?'on':''}" style="${on?`background:${c.color};`:''}" onclick="selCat('${c.id}')">${c.emoji} ${c.label}</button>`;
+  }).join('');
+}
+function selCat(id){ selectedCat=id; renderCatSel(); }
+
+function addTask(){
+  const name = document.getElementById('inp-name').value.trim();
+  if(!name){ toast('タスク名を入力してね！','bad'); return; }
+  const t = {
+    id: Date.now().toString(),
+    name, cat: selectedCat,
+    date: document.getElementById('inp-date').value,
+    pts: parseInt(document.getElementById('inp-pts').value)||10,
+    mission: isMission,
+    done: false,
+  };
+  if(isMission){
+    t.time = document.getElementById('inp-time').value || null;
+    t.penalty = parseInt(document.getElementById('inp-pen').value)||20;
+  }
+  tasks.unshift(t);
+  save();
+  document.getElementById('add-overlay').classList.remove('open');
+  // set selDate to new task's date for calendar view
+  if(t.date) selDate = t.date;
+  renderAll();
+  toast('タスクを追加したよ📝');
+}
+
+// ───── TABS ─────
+function showTab(tab){
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach((el,i)=>{
+    el.classList.toggle('active',['cal','tasks','points'][i]===tab);
+  });
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+}
+
+// ───── TOAST ─────
+function toast(msg, type=''){
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'toast show' + (type?' '+type:'');
+  clearTimeout(el._t);
+  el._t = setTimeout(()=>el.classList.remove('show'),2400);
+}
+
+// ───── INIT ─────
+(function init(){
+  const now = new Date();
+  calYear  = now.getFullYear();
+  calMonth = now.getMonth();
+  selDate  = todayStr();
+  checkPenalties();
+  renderAll();
+})();
+
+// Check penalties every minute
+setInterval(()=>{ checkPenalties(); renderAll(); }, 60000);
+</script>
+</body>
+</html>
