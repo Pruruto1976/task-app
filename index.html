@@ -268,7 +268,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);disp
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-app.js";
 import { getFirestore, collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-firestore.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
+import { getAuth, GoogleAuthProvider, signInWithRedirect, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDVynkWdyCllY5Ghqju0lR7bbvYq27HF5A",
@@ -317,7 +317,7 @@ function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 window.loginWithGoogle = async function(){
   document.getElementById('login-err').textContent='';
   try {
-    const result = await signInWithPopup(auth, new GoogleAuthProvider());
+    const result = await signInWithRedirect(auth, new GoogleAuthProvider());
     if(!ALLOWED_EMAILS.includes(result.user.email)){
       await signOut(auth);
       document.getElementById('login-err').textContent='このアカウントは許可されていません';
@@ -349,6 +349,13 @@ onAuthStateChanged(auth, user => {
     tasks=[]; points=0;
     if(unsubTasks) unsubTasks();
     if(unsubPoints) unsubPoints();
+  }
+});
+
+getRedirectResult(auth).then(result => {
+  if(result && !ALLOWED_EMAILS.includes(result.user.email)){
+    signOut(auth);
+    document.getElementById('login-err').textContent='このアカウントは許可されていません';
   }
 });
 
