@@ -516,6 +516,10 @@ onAuthStateChanged(auth,async user=>{
     const avatar=document.getElementById('hdr-avatar');
     if(user.photoURL){avatar.src=user.photoURL;avatar.style.display='block';}
     if(!isParent){
+  const parentTab=document.querySelector('.tab:last-child');
+  parentTab.style.display='none';
+}
+    if(!isParent){
       await setDoc(doc(db,'app','childUid'),{uid:user.uid,email:user.email});
     } else {
       try{const snap=await getDoc(doc(db,'app','childUid'));if(snap.exists())childUid=snap.data().uid;}catch(e){}
@@ -645,7 +649,7 @@ function taskCardHTML(t){
   const missBadge=t.mission?`<span class="badge badge-miss">🔥ミッション</span>`:'';
   const penBadge=t.penalized?`<span class="badge" style="background:#ccc">ペナルティ済</span>`:'';
   let cls='tc';if(t.done)cls+=' done';if(t.mission&&!t.done)cls+=' mission-card';if(overdue&&!t.done)cls+=' overdue-card';
-  return`<div class="${cls}"><button class="chk ${t.done?'on':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</button><div class="tc-body"><div class="tc-name">${esc(t.name)}</div><div class="tc-meta"><span class="badge" style="background:${cat.color}">${cat.emoji} ${cat.label}</span>${missBadge}${penBadge}${dateLbl}${timeLbl}<span class="badge-pt">+${t.pts}pt</span></div></div><button class="del-btn" onclick="delTask('${t.id}')">🗑</button></div>`;
+  return`<div class="${cls}"><button class="chk ${t.done?'on':''}" onclick="toggleTask('${t.id}')">${t.done?'✓':''}</button><div class="tc-body"><div class="tc-name">${esc(t.name)}</div><div class="tc-meta"><span class="badge" style="background:${cat.color}">${cat.emoji} ${cat.label}</span>${missBadge}${penBadge}${dateLbl}${timeLbl}<span class="badge-pt">+${t.pts}pt</span></div></div>${isParent?`<button class="del-btn" onclick="delTask('${t.id}')">🗑</button>`:''}</div>`;
 }
 
 function renderRewards(){
@@ -928,6 +932,7 @@ window.addTracker=async function(){
 
 // ── TABS ──
 window.showTab=function(tab){
+  if(tab==='parent'&&!isParent){toast('保護者専用ページです','bad');return;}
   const tabs=['home','tasks','rewards','schedule','parent'];
   document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',tabs[i]===tab));
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
