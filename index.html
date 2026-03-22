@@ -607,21 +607,35 @@ function renderHome(){
   if(ms.length){const m=ms[0];banner.innerHTML=`<div class="miss-strip"><div class="miss-strip-icon">🔥</div><div class="miss-strip-body"><div class="miss-strip-title">${esc(m.name)}</div><div class="miss-strip-sub">${m.time?`⏰ ${m.time}まで`:' 今日中に！'} 未完了で -${m.penalty||20}pt</div></div><div class="miss-count">${ms.length}件</div></div>`;}
   else banner.innerHTML='';
   const tList=document.getElementById('tracker-list');
-  if(!trackers.length){tList.innerHTML=`<div class="empty"><div class="empty-ic">📊</div><div class="empty-tx">保護者画面からトラッカーを追加してね</div></div>`;return;}
-  tList.innerHTML=trackers.map(tr=>{
+  if(!trackers.length){tList.innerHTML=`<div class="empty"><div class="empty-ic">📊</div><div class="empty-tx">保護者画面からトラッカーを追加してね</div></div>`;}
+  else{tList.innerHTML=trackers.map(tr=>{
     const p2=tr.goal?Math.min(100,Math.round((tr.current||0)/tr.goal*100)):0;
     return`<div class="tracker-card"><div class="tracker-top"><div class="tracker-name">${esc(tr.name)}</div><div class="tracker-num">${tr.current||0} / ${tr.goal} ${esc(tr.unit||'')}</div></div><div class="tracker-bar-wrap"><div class="tracker-bar" style="width:${p2}%"></div></div><div class="tracker-foot"><span>0</span><span>${p2}%</span><span>${tr.goal}</span></div></div>`;
-  }).join('');
+  }).join('');}
+  // 今日のタスク一覧（毎回クリアして再描画）
+  let homeTaskList=document.getElementById('home-task-list');
+  if(!homeTaskList){
+    homeTaskList=document.createElement('div');
+    homeTaskList.id='home-task-list';
+    document.getElementById('tracker-list').after(homeTaskList);
+  }
+  const todayTasks=tasks.filter(t=>t.date===today);
+  if(todayTasks.length){
+    homeTaskList.innerHTML='<div class="sec-ttl">📋 今日のタスク</div>'+
+      [...todayTasks].sort((a,b)=>(b.mission?1:0)-(a.mission?1:0)).map(taskCardHTML).join('');
+  } else {
+    homeTaskList.innerHTML='';
+  }
 }
 
 function renderTasks(){
   const cfRow=document.getElementById('cat-filter');
-  const allOn=filterCat==='all';
-  cfRow.innerHTML=`<button class="cat-btn ${allOn?'on':''}" style="${allOn?'background:#7c5cfc;color:#fff;':''}" onclick="setFilter('all')">すべて</button>`+CATS.map(c=>{const on=filterCat===c.id;return`<button class="cat-btn ${on?'on':''}" style="${on?`background:${c.color};color:#fff;`:''}" onclick="setFilter('${c.id}')">${c.emoji} ${c.label}</button>`;}).join('');
+  cfRow.innerHTML='';
   const list=document.getElementById('task-list');
-  const pending=tasks.filter(t=>!t.done&&(filterCat==='all'||t.cat===filterCat));
-  if(!pending.length){list.innerHTML=`<div class="empty"><div class="empty-ic">🎉</div><div class="empty-tx">全部できた！すごい！</div></div>`;return;}
-  list.innerHTML=[...pending].sort((a,b)=>(b.mission?1:0)-(a.mission?1:0)).map(taskCardHTML).join('');
+  const today=todayStr();
+  const todayPending=tasks.filter(t=>t.date===today&&!t.done);
+  if(!todayPending.length){list.innerHTML=`<div class="empty"><div class="empty-ic">🎉</div><div class="empty-tx">今日のタスクは全部完了！</div></div>`;return;}
+  list.innerHTML=todayPending.sort((a,b)=>(b.mission?1:0)-(a.mission?1:0)).map(taskCardHTML).join('');
 }
 
 function taskCardHTML(t){
