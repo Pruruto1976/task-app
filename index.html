@@ -95,6 +95,10 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);disp
 .rwd-status.approved{background:#e8fdf5;color:var(--green);}
 .rwd-btn{border:none;border-radius:10px;padding:8px 13px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:800;cursor:pointer;background:var(--primary-light);color:var(--primary);}
 .rwd-btn:disabled{opacity:.35;cursor:not-allowed;}
+.rwd-datetime{font-size:10px;color:var(--muted);font-weight:600;margin-top:3px;}
+.rwd-actions{display:flex;gap:6px;flex-shrink:0;align-items:center;}
+.rwd-edit-btn{background:var(--primary-light);border:none;border-radius:8px;padding:6px 10px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;color:var(--primary);cursor:pointer;}
+.rwd-del-btn{background:#fee;border:none;border-radius:8px;padding:6px 10px;font-family:'Nunito',sans-serif;font-size:11px;font-weight:700;color:var(--red);cursor:pointer;}
 
 /* ── CALENDAR ── */
 .cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
@@ -182,6 +186,7 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);disp
 .sub-btn.green{background:linear-gradient(135deg,#06d6a0,#00b388);box-shadow:0 4px 16px rgba(6,214,160,.3);}
 .sub-btn.blue{background:linear-gradient(135deg,#0ea5e9,#0284c7);box-shadow:0 4px 16px rgba(14,165,233,.3);}
 .sub-btn.orange{background:linear-gradient(135deg,#ff8c00,#ffc542);box-shadow:0 4px 16px rgba(255,140,0,.3);}
+.sub-btn.gold{background:linear-gradient(135deg,#ffc542,#ff8c00);box-shadow:0 4px 16px rgba(255,196,66,.4);color:#1e1b2e;}
 .toast{position:fixed;bottom:calc(var(--tab-h) + 14px);left:50%;transform:translateX(-50%) translateY(10px);background:#1e1b2e;color:#fff;padding:10px 22px;border-radius:50px;font-weight:700;font-size:13px;opacity:0;transition:all .3s;pointer-events:none;z-index:300;white-space:nowrap;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.bad{background:var(--red);}
@@ -255,6 +260,19 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);disp
     <div id="reward-requests"></div>
   </div>
 
+  <!-- EDIT REWARD MODAL -->
+  <div class="overlay" id="rwd-edit-overlay" onclick="closeOverlayOut(event,'rwd-edit-overlay')">
+    <div class="modal">
+      <div class="modal-handle"></div>
+      <div class="modal-ttl" id="rwd-edit-ttl">ごほうびを追加 🎁</div>
+      <input type="hidden" id="rwd-edit-id">
+      <div class="fg"><label class="fl">ごほうびの名前</label><input class="fi" id="rwd-edit-name" type="text" placeholder="例: ゲーム30分" maxlength="30"></div>
+      <div class="fg"><label class="fl">アイコン（絵文字）</label><input class="fi" id="rwd-edit-icon" type="text" placeholder="例: 🎮" maxlength="4"></div>
+      <div class="fg"><label class="fl">必要ポイント</label><input class="fi" id="rwd-edit-cost" type="number" value="50" min="1" max="9999"></div>
+      <button class="sub-btn gold" onclick="saveReward()">保存する</button>
+    </div>
+  </div>
+
   <div class="page" id="page-schedule">
     <div class="cal-nav">
       <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
@@ -276,6 +294,11 @@ body{font-family:'Nunito',sans-serif;background:var(--bg);color:var(--text);disp
     <div class="parent-section">
       <div class="parent-ttl">🎁 ごほうび承認待ち</div>
       <div id="parent-approvals"></div>
+    </div>
+    <div class="parent-section">
+      <div class="parent-ttl">🎁 ごほうびの管理</div>
+      <div id="parent-rewards"></div>
+      <button class="sub-btn gold" onclick="openRewardAdd()" style="margin-top:8px;">＋ ごほうびを追加</button>
     </div>
     <div class="parent-section">
       <div class="parent-ttl">📊 トラッカー管理</div>
@@ -468,7 +491,7 @@ const app  = initializeApp(firebaseConfig);
 const db   = getFirestore(app);
 const auth = getAuth(app);
 
-let tasks=[],points=0,trackers=[],rewardRequests=[],schedules=[];
+let tasks=[],points=0,trackers=[],rewardRequests=[],schedules=[],rewards=[];
 let calYear,calMonth,selDate;
 let selectedCat='study',editCat='study',rgEditCat='study';
 let isMission=false,isRepeat=false,selectedDows=[];
@@ -478,6 +501,11 @@ let adjAmount=0,childUid=null;
 
 function todayStr(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function getCat(id){return CATS.find(c=>c.id===id)||CATS[4];}
+function fmtDt(ts){
+  if(!ts)return '';
+  const d=new Date(ts);
+  return d.getFullYear()+'/'+(d.getMonth()+1)+'/'+(d.getDate())+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+}
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function getUid(){return isParent&&childUid?childUid:currentUser.uid;}
 // 月曜始まりの曜日インデックス（月=0, 火=1, ... 日=6）
@@ -550,6 +578,22 @@ function startListeners(){
   unsubTrackers=onSnapshot(collection(db,'users',uid,'trackers'),snap=>{trackers=snap.docs.map(d=>({id:d.id,...d.data()}));renderAll();});
   unsubRequests=onSnapshot(collection(db,'users',uid,'rewardRequests'),snap=>{rewardRequests=snap.docs.map(d=>({id:d.id,...d.data()}));renderAll();});
   unsubSchedules=onSnapshot(collection(db,'users',uid,'schedules'),snap=>{schedules=snap.docs.map(d=>({id:d.id,...d.data()}));renderAll();});
+  onSnapshot(collection(db,'users',uid,'rewardMaster'),snap=>{
+    rewards=snap.docs.map(d=>({id:d.id,...d.data()}));
+    if(!rewards.length){
+      // 初回: デフォルトごほうびをFirestoreに作成
+      const uid2=getUid();
+      const DEFAULTS=[
+        {name:'ゲーム30分',icon:'🎮',cost:50},
+        {name:'おやつ1個',icon:'🍪',cost:30},
+        {name:'好きな夕ごはん',icon:'🍕',cost:100},
+        {name:'映画をみる',icon:'🎬',cost:80},
+        {name:'文房具を買ってもらう',icon:'✏️',cost:150},
+      ];
+      DEFAULTS.forEach(r=>addDoc(collection(db,'users',uid2,'rewardMaster'),{...r,createdAt:Date.now()}));
+    }
+    renderAll();
+  });
   if(isParent&&childUid){
     onSnapshot(doc(db,'users',childUid,'notifications','toParent'),snap=>{
       if(snap.exists()&&!snap.data().read){showBanner(snap.data().message,'gold');updateDoc(doc(db,'users',childUid,'notifications','toParent'),{read:true});}
@@ -616,10 +660,18 @@ function taskCardHTML(t){
 }
 
 function renderRewards(){
-  document.getElementById('reward-list').innerHTML=REWARDS_DEFAULT.map(r=>`<div class="rwd-card"><div class="rwd-ic">${r.icon}</div><div class="rwd-info"><div class="rwd-name">${r.name}</div><div class="rwd-cost">🪙 ${r.cost}pt</div></div><button class="rwd-btn" onclick="requestReward('${r.id}','${r.name}','${r.icon}',${r.cost})" ${points<r.cost?'disabled':''}>申請</button></div>`).join('');
+  // ごほうびリスト（Firestoreから）
+  const rwdSrc=rewards.length?rewards:[];
+  document.getElementById('reward-list').innerHTML=rwdSrc.map(r=>`<div class="rwd-card"><div class="rwd-ic">${r.icon||'🎁'}</div><div class="rwd-info"><div class="rwd-name">${esc(r.name)}</div><div class="rwd-cost">🪙 ${r.cost}pt</div></div><button class="rwd-btn" onclick="requestReward('${r.id}','${esc(r.name)}','${r.icon||'🎁'}',${r.cost})" ${points<r.cost?'disabled':''}>申請</button></div>`).join('');
+  // 申請リスト（日時表示）
   const reqList=document.getElementById('reward-requests');
   if(!rewardRequests.length){reqList.innerHTML=`<div class="empty"><div class="empty-ic">📭</div><div class="empty-tx">申請はまだないよ</div></div>`;return;}
-  reqList.innerHTML=rewardRequests.map(r=>`<div class="rwd-card"><div class="rwd-ic">${r.icon||'🎁'}</div><div class="rwd-info"><div class="rwd-name">${esc(r.name)}</div><div class="rwd-cost">🪙 ${r.cost}pt</div></div><span class="rwd-status ${r.status==='pending'?'pending':'approved'}">${r.status==='pending'?'承認待ち':'承認済み ✅'}</span></div>`).join('');
+  reqList.innerHTML=rewardRequests.map(r=>{
+    const dtLabel=r.status==='pending'
+      ?`<div class="rwd-datetime">📅 申請日時: ${fmtDt(r.createdAt)}</div>`
+      :`<div class="rwd-datetime">✅ 承認日時: ${fmtDt(r.approvedAt)}</div>`;
+    return`<div class="rwd-card"><div class="rwd-ic">${r.icon||'🎁'}</div><div class="rwd-info"><div class="rwd-name">${esc(r.name)}</div><div class="rwd-cost">🪙 ${r.cost}pt</div>${dtLabel}</div><span class="rwd-status ${r.status==='pending'?'pending':'approved'}">${r.status==='pending'?'承認待ち':'承認済み ✅'}</span></div>`;
+  }).join('');
   if(!isParent){
     const approvedCount=rewardRequests.filter(r=>r.status==='approved'&&!r.childRead).length;
     const rewardsTab=document.querySelector('.tab:nth-child(3)');
@@ -721,10 +773,15 @@ function renderRepeatGroups(){
 }
 
 function renderParent(){
+  // 承認待ち（日時表示）
   const apList=document.getElementById('parent-approvals');
   const pending=rewardRequests.filter(r=>r.status==='pending');
   if(!pending.length){apList.innerHTML=`<div class="empty"><div class="empty-ic">✅</div><div class="empty-tx">承認待ちのごほうびはなし</div></div>`;}
-  else apList.innerHTML=pending.map(r=>`<div class="approval-card"><div style="font-size:28px">${r.icon||'🎁'}</div><div class="approval-info"><div class="approval-name">${esc(r.name)}</div><div class="approval-pts">🪙 ${r.cost}pt</div></div><button class="approve-btn" onclick="approveReward('${r.id}',${r.cost},'${esc(r.name)}')">承認</button><button class="reject-btn" onclick="rejectReward('${r.id}','${esc(r.name)}')">却下</button></div>`).join('');
+  else apList.innerHTML=pending.map(r=>`<div class="approval-card"><div style="font-size:28px">${r.icon||'🎁'}</div><div class="approval-info"><div class="approval-name">${esc(r.name)}</div><div class="approval-pts">🪙 ${r.cost}pt</div><div class="rwd-datetime">📅 申請: ${fmtDt(r.createdAt)}</div></div><button class="approve-btn" onclick="approveReward('${r.id}',${r.cost},'${esc(r.name)}')">承認</button><button class="reject-btn" onclick="rejectReward('${r.id}','${esc(r.name)}')">却下</button></div>`).join('');
+  // ごほうびマスター管理
+  const rwdList=document.getElementById('parent-rewards');
+  if(!rewards.length){rwdList.innerHTML=`<div class="empty"><div class="empty-ic">🎁</div><div class="empty-tx">ごほうびを追加してね</div></div>`;}
+  else rwdList.innerHTML=rewards.map(r=>`<div class="rwd-card"><div class="rwd-ic">${r.icon||'🎁'}</div><div class="rwd-info"><div class="rwd-name">${esc(r.name)}</div><div class="rwd-cost">🪙 ${r.cost}pt</div></div><div class="rwd-actions"><button class="rwd-edit-btn" onclick="openRewardEdit('${r.id}','${esc(r.name)}','${r.icon||'🎁'}',${r.cost})">✏️</button><button class="rwd-del-btn" onclick="deleteReward('${r.id}')">🗑</button></div></div>`).join('');
   const trList=document.getElementById('parent-trackers');
   if(!trackers.length){trList.innerHTML=`<div class="empty"><div class="empty-ic">📊</div><div class="empty-tx">トラッカーがまだないよ</div></div>`;}
   else trList.innerHTML=trackers.map(tr=>`<div class="tracker-card"><div class="tracker-top"><div class="tracker-name">${esc(tr.name)}</div><button class="del-btn" onclick="deleteTracker('${tr.id}')">🗑</button></div><div style="font-size:13px;color:var(--muted);margin-bottom:8px">${tr.current||0} / ${tr.goal} ${esc(tr.unit||'')}</div><div class="tracker-bar-wrap"><div class="tracker-bar" style="width:${tr.goal?Math.min(100,Math.round((tr.current||0)/tr.goal*100)):0}%"></div></div></div>`).join('');
@@ -805,17 +862,57 @@ window.saveEditTask=async function(){
 window.requestReward=async function(id,name,icon,cost){
   if(!currentUser||points<cost)return;
   const uid=getUid();
-  await addDoc(collection(db,'users',uid,'rewardRequests'),{rewardId:id,name,icon,cost,status:'pending',childRead:false,createdAt:Date.now()});
+  await addDoc(collection(db,'users',uid,'rewardRequests'),{rewardId:id,name,icon,cost,status:'pending',childRead:false,createdAt:Date.now(),approvedAt:null});
   await setDoc(doc(db,'users',uid,'notifications','toParent'),{message:`「${name}」のごほうびを申請したよ！確認してね🎁`,read:false,createdAt:Date.now()});
   toast('申請したよ！親に承認してもらおう🎁');
 };
 window.approveReward=async function(id,cost,name){
   if(!currentUser)return;
   const uid=getUid();
-  await updateDoc(doc(db,'users',uid,'rewardRequests',id),{status:'approved',childRead:false});
+  await updateDoc(doc(db,'users',uid,'rewardRequests',id),{status:'approved',childRead:false,approvedAt:Date.now()});
   await setDoc(doc(db,'users',uid,'meta','points'),{value:Math.max(0,points-cost)});
   await setDoc(doc(db,'users',uid,'notifications','toChild'),{message:`「${name}」のごほうびが承認されたよ！🎊`,read:false,createdAt:Date.now()});
   toast('ごほうびを承認したよ✅');
+};
+
+// ごほうびマスター管理
+window.openRewardAdd=function(){
+  document.getElementById('rwd-edit-id').value='';
+  document.getElementById('rwd-edit-name').value='';
+  document.getElementById('rwd-edit-icon').value='🎁';
+  document.getElementById('rwd-edit-cost').value=50;
+  document.getElementById('rwd-edit-ttl').textContent='ごほうびを追加 🎁';
+  document.getElementById('rwd-edit-overlay').classList.add('open');
+};
+window.openRewardEdit=function(id,name,icon,cost){
+  document.getElementById('rwd-edit-id').value=id;
+  document.getElementById('rwd-edit-name').value=name;
+  document.getElementById('rwd-edit-icon').value=icon;
+  document.getElementById('rwd-edit-cost').value=cost;
+  document.getElementById('rwd-edit-ttl').textContent='ごほうびを編集 ✏️';
+  document.getElementById('rwd-edit-overlay').classList.add('open');
+};
+window.saveReward=async function(){
+  if(!currentUser)return;
+  const name=document.getElementById('rwd-edit-name').value.trim();
+  if(!name){toast('名前を入力してね','bad');return;}
+  const icon=document.getElementById('rwd-edit-icon').value.trim()||'🎁';
+  const cost=parseInt(document.getElementById('rwd-edit-cost').value)||50;
+  const id=document.getElementById('rwd-edit-id').value;
+  const uid=getUid();
+  if(id){
+    await updateDoc(doc(db,'users',uid,'rewardMaster',id),{name,icon,cost});
+    toast('ごほうびを変更したよ✅');
+  } else {
+    await addDoc(collection(db,'users',uid,'rewardMaster'),{name,icon,cost,createdAt:Date.now()});
+    toast('ごほうびを追加したよ🎁');
+  }
+  document.getElementById('rwd-edit-overlay').classList.remove('open');
+};
+window.deleteReward=async function(id){
+  if(!confirm('このごほうびを削除する？'))return;
+  await deleteDoc(doc(db,'users',getUid(),'rewardMaster',id));
+  toast('削除したよ🗑');
 };
 window.rejectReward=async function(id,name){
   if(!currentUser)return;
