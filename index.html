@@ -777,15 +777,20 @@ function renderParent(){
 window.toggleTask=async function(id){
   if(!currentUser)return;
   const t=tasks.find(t=>t.id===id);if(!t)return;
-  // 完了にするときだけ確認
   if(!t.done&&!confirm(`「${t.name}」を完了にする？`))return;
   const newDone=!t.done,uid=getUid();
   await updateDoc(doc(db,'users',uid,'tasks',id),{done:newDone});
   const newPts=newDone?points+t.pts:Math.max(0,points-t.pts);
   await setDoc(doc(db,'users',uid,'meta','points'),{value:newPts});
-  if(newDone&&t.trackerId&&t.trackerVal){
+  // トラッカーの加算・減算
+  if(t.trackerId&&t.trackerVal){
     const tr=trackers.find(tr=>tr.id===t.trackerId);
-    if(tr)await updateDoc(doc(db,'users',uid,'trackers',t.trackerId),{current:(tr.current||0)+Number(t.trackerVal)});
+    if(tr){
+      const newVal=newDone
+        ?(tr.current||0)+Number(t.trackerVal)
+        :Math.max(0,(tr.current||0)-Number(t.trackerVal));
+      await updateDoc(doc(db,'users',uid,'trackers',t.trackerId),{current:newVal});
+    }
   }
   // 今日のタスクが全部完了したら保護者に通知
   if(newDone){
