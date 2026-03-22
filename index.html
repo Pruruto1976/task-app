@@ -544,7 +544,7 @@ function toast(msg,type=''){
 }
 
 const now=new Date();
-calYear=now.getFullYear(); calMonth=now.getMonth(); selDate=todayStr();
+calYear=now.getFullYear(); calMonth=now.getMonth(); selDate=todayStr(); renderCalendar();
 setInterval(()=>{ if(currentUser){ checkPenalties(); renderAll(); } },60000);
 </script>
 </body>
