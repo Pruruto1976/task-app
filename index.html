@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="やること帳">
+<meta name="apple-mobile-web-app-title" content="やることクエスト">
 <title>やること帳 ⭐</title>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
@@ -493,8 +493,8 @@ const firebaseConfig = {
   appId: "1:441639308528:web:1b67742f2bb27d4b304635"
 };
 
-const ALLOWED_EMAILS = ["ruhitonium@gmail.com","ricopin1013@gmail.com"];
-const PARENT_EMAILS  = ["ruhitonium@gmail.com"];
+const ALLOWED_EMAILS = ["ruhitonium@gmail.com","ricopin1013@gmail.com","rikopin.ayako@gmail.com"];
+const PARENT_EMAILS  = ["ruhitonium@gmail.com","rikopin.ayako@gmail.com"];
 const REWARDS_DEFAULT = [
   {id:'r1',name:'ゲーム30分',icon:'🎮',cost:50},
   {id:'r2',name:'おやつ1個',icon:'🍪',cost:30},
@@ -569,8 +569,8 @@ onAuthStateChanged(auth,async user=>{
     isParent=PARENT_EMAILS.includes(user.email);
     document.getElementById('login-screen').classList.add('hide');
     const name=user.displayName?.split(' ')[0]||'きみ';
-    document.getElementById('hdr-name').textContent=name+'のやること帳';
-    document.getElementById('home-name').textContent=name+'のやること帳へようこそ！';
+    document.getElementById('hdr-name').textContent=name+'のやることクエスト';
+    document.getElementById('home-name').textContent=name+'のやることクエストへようこそ！';
     const avatar=document.getElementById('hdr-avatar');
     if(user.photoURL){avatar.src=user.photoURL;avatar.style.display='block';}
     if(!isParent){
